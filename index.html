@@ -2,227 +2,208 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TAILBLADE</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+  <meta
+    name="viewport"
+    content="width=device-width,
+             initial-scale=1,
+             maximum-scale=1,
+             user-scalable=no,
+             viewport-fit=cover"
+  >
 
-    html,
-    body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #07060c;
-      font-family: Arial, sans-serif;
-      touch-action: none;
-    }
+  <meta name="theme-color" content="#08060d">
 
-    #game {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  <title>TAILBLADE - Pixel Action Game</title>
 
-    #title-screen {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background:
-        radial-gradient(circle at center, #171027 0%, #0b0912 45%, #050509 100%);
-      z-index: 100;
-    }
-
-    .logo {
-      margin: 0;
-      color: #f4e9c8;
-      font-family: Georgia, serif;
-      font-size: clamp(52px, 12vw, 150px);
-      letter-spacing: 0.04em;
-      text-shadow:
-        5px 5px 0 #38234d,
-        0 0 35px rgba(150, 90, 220, 0.25);
-      text-align: center;
-    }
-
-    .subtitle {
-      margin-top: 12px;
-      color: #9a8fb5;
-      font-size: clamp(12px, 2.5vw, 28px);
-      letter-spacing: 0.45em;
-    }
-
-    #start-button {
-      margin-top: 70px;
-      width: min(260px, 55vw);
-      height: 78px;
-      border: 3px solid #f0a63c;
-      border-radius: 10px;
-      background: rgba(20, 15, 34, 0.8);
-      color: #f4e9c8;
-      font-size: 22px;
-      font-weight: bold;
-      letter-spacing: 0.25em;
-      cursor: pointer;
-      touch-action: manipulation;
-      transition: transform 0.12s, background 0.12s;
-    }
-
-    #start-button:active {
-      transform: scale(0.94);
-      background: #2a1b38;
-    }
-
-    #game-screen {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: #07060c;
-    }
-
-    #game-screen.active {
-      display: flex;
-    }
-
-    canvas {
-      width: min(100vw, 177.78vh);
-      height: min(56.25vw, 100vh);
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
-      background: #111;
-    }
-
-    #rotate-hint {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: #07060c;
-      color: #f4e9c8;
-      font-size: 6vw;
-      text-align: center;
-      z-index: 200;
-    }
-
-    @media (orientation: portrait) {
-      #rotate-hint {
-        display: flex;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <div id="game">
+  <main id="game-root">
 
-    <section id="title-screen">
-      <h1 class="logo">TAILBLADE</h1>
-      <div class="subtitle">PIXEL ACTION GAME</div>
+    <!-- GAME CANVAS -->
+    <canvas
+      id="game-canvas"
+      width="960"
+      height="540"
+      aria-label="TAILBLADE game"
+    ></canvas>
 
-      <button id="start-button" type="button">
+    <!-- START SCREEN -->
+    <section id="start-screen" class="screen">
+
+      <div class="title-wrap">
+        <p class="eyebrow">PIXEL ACTION GAME</p>
+
+        <h1>TAILBLADE</h1>
+
+        <p class="subtitle">
+          THE LAST BLADE OF THE NIGHT
+        </p>
+      </div>
+
+      <button
+        id="start-button"
+        class="main-button"
+        type="button"
+      >
         START
       </button>
+
+      <div class="controls-help">
+        <span>← →</span>
+        <span>MOVE</span>
+        <span>↑ / SPACE</span>
+        <span>JUMP</span>
+        <span>Z / TAP</span>
+        <span>ATTACK</span>
+      </div>
+
+      <p class="best-score">
+        BEST <strong id="start-best-score">0</strong>
+      </p>
+
     </section>
 
-    <section id="game-screen">
-      <canvas id="game-canvas" width="320" height="180"></canvas>
+
+    <!-- GAME UI -->
+    <section id="game-ui" hidden>
+
+      <div class="top-bar">
+
+        <div class="brand">
+          TAILBLADE
+        </div>
+
+        <div class="score-box">
+          SCORE
+          <strong id="score">0</strong>
+        </div>
+
+        <div class="hp-box">
+          <span>HP</span>
+
+          <div class="hp-track">
+            <div id="hp-fill"></div>
+          </div>
+
+          <strong id="hp-text">100</strong>
+        </div>
+
+      </div>
+
+      <div id="combo" class="combo" hidden>
+        <strong id="combo-number">0</strong>
+        HIT COMBO
+      </div>
+
     </section>
 
-    <div id="rotate-hint">
-      <p>画面を横向きにしてください</p>
+
+    <!-- TOUCH CONTROLS -->
+    <section id="touch-controls" hidden>
+
+      <div class="touch-left">
+
+        <button
+          id="left-button"
+          class="touch-button"
+          type="button"
+          aria-label="左"
+        >
+          ◀
+        </button>
+
+        <button
+          id="right-button"
+          class="touch-button"
+          type="button"
+          aria-label="右"
+        >
+          ▶
+        </button>
+
+      </div>
+
+      <div class="touch-right">
+
+        <button
+          id="jump-button"
+          class="touch-button jump"
+          type="button"
+          aria-label="ジャンプ"
+        >
+          ↑
+        </button>
+
+        <button
+          id="attack-button"
+          class="touch-button attack"
+          type="button"
+          aria-label="攻撃"
+        >
+          ⚔
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- GAME OVER -->
+    <section id="game-over-screen" class="screen" hidden>
+
+      <div class="game-over-card">
+
+        <p class="eyebrow">
+          RUN ENDED
+        </p>
+
+        <h2>GAME OVER</h2>
+
+        <div class="final-score">
+          <span>SCORE</span>
+          <strong id="final-score">0</strong>
+        </div>
+
+        <div class="new-record" id="new-record" hidden>
+          NEW BEST!
+        </div>
+
+        <button
+          id="restart-button"
+          class="main-button"
+          type="button"
+        >
+          RETRY
+        </button>
+
+        <button
+          id="title-button"
+          class="secondary-button"
+          type="button"
+        >
+          TITLE
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- ROTATE MESSAGE -->
+    <div id="rotate-hint" hidden>
+      <div>
+        <div class="rotate-icon">↻</div>
+        <p>画面を横向きにしてください</p>
+      </div>
     </div>
 
-  </div>
+  </main>
 
-  <script>
-    "use strict";
-
-    document.addEventListener("DOMContentLoaded", () => {
-
-      const startButton = document.getElementById("start-button");
-      const titleScreen = document.getElementById("title-screen");
-      const gameScreen = document.getElementById("game-screen");
-      const canvas = document.getElementById("game-canvas");
-
-      const ctx = canvas.getContext("2d");
-
-      let gameStarted = false;
-
-      function startGame() {
-        if (gameStarted) return;
-
-        gameStarted = true;
-
-        titleScreen.style.display = "none";
-        gameScreen.classList.add("active");
-
-        drawGame();
-
-        console.log("TAILBLADE STARTED");
-      }
-
-      startButton.addEventListener("click", startGame);
-
-      startButton.addEventListener("pointerdown", (event) => {
-        event.preventDefault();
-      });
-
-      function drawGame() {
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // 背景
-        ctx.fillStyle = "#11101a";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // 空
-        ctx.fillStyle = "#211733";
-        ctx.fillRect(0, 0, canvas.width, 110);
-
-        // 地面
-        ctx.fillStyle = "#30243d";
-        ctx.fillRect(0, 110, canvas.width, 70);
-
-        // 地面ライン
-        ctx.fillStyle = "#f0a63c";
-        ctx.fillRect(0, 109, canvas.width, 2);
-
-        // 仮プレイヤー
-        ctx.fillStyle = "#e8b96a";
-        ctx.fillRect(70, 90, 14, 20);
-
-        ctx.fillStyle = "#f8e0b0";
-        ctx.fillRect(73, 84, 10, 8);
-
-        // 目
-        ctx.fillStyle = "#4fd6c0";
-        ctx.fillRect(79, 86, 2, 2);
-
-        // UI
-        ctx.fillStyle = "#f4e9c8";
-        ctx.font = "10px Arial";
-        ctx.fillText("TAILBLADE", 10, 15);
-
-        ctx.fillStyle = "#9a8fb5";
-        ctx.fillText("GAME STARTED", 10, 28);
-      }
-
-    });
-  </script>
+  <script src="game.js"></script>
 
 </body>
 </html>
