@@ -23,7 +23,7 @@
 
   <!-- Canvas -->
   <div id="gameWrap">
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="gameCanvas" aria-label="TAILBLADE game canvas"></canvas>
 
     <!-- UI - top bars -->
     <div id="uiTopLeft" class="uiTop left">
@@ -45,18 +45,18 @@
     </div>
 
     <!-- Pause button -->
-    <button id="pauseBtn" class="pauseBtn">⏸</button>
+    <button id="pauseBtn" class="pauseBtn" aria-label="Pause">⏸</button>
 
     <!-- Bottom touch buttons -->
-    <div id="touchControls" class="touchControls">
+    <div id="touchControls" class="touchControls" role="group" aria-label="Touch controls">
       <div class="leftCluster">
-        <button class="btn touchBtn" data-action="left" id="btnLeft">◀</button>
-        <button class="btn touchBtn" data-action="right" id="btnRight">▶</button>
+        <button class="btn touchBtn" data-action="left" id="btnLeft"><span class="label">◀</span><span class="holdBar"></span></button>
+        <button class="btn touchBtn" data-action="right" id="btnRight"><span class="label">▶</span><span class="holdBar"></span></button>
       </div>
       <div class="rightCluster">
-        <button class="btn touchBtn" data-action="jump" id="btnJump">▲</button>
-        <button class="btn touchBtn" data-action="attack" id="btnAttack">⚔</button>
-        <button class="btn touchBtn" data-action="dash" id="btnDash">⤴</button>
+        <button class="btn touchBtn" data-action="jump" id="btnJump"><span class="label">▲</span><span class="holdBar"></span></button>
+        <button class="btn touchBtn" data-action="attack" id="btnAttack"><span class="label">⚔</span><span class="holdBar"></span></button>
+        <button class="btn touchBtn" data-action="dash" id="btnDash"><span class="label">⤴</span><span class="holdBar"></span></button>
       </div>
     </div>
 
@@ -85,7 +85,7 @@
     </div>
 
     <!-- Boss HUD -->
-    <div id="bossHud" class="bossHud hidden">
+    <div id="bossHud" class="bossHud hidden" aria-hidden="true">
       <div class="bossTitle">NIGHT GUARDIAN</div>
       <div class="bossBar"><div id="bossFill"></div></div>
     </div>
