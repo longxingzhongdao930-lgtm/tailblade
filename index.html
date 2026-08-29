@@ -2,10 +2,204 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width,
+             initial-scale=1.0,
+             maximum-scale=1.0,
+             user-scalable=no,
+             viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#07060c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent"
+  >
+  <meta name="mobile-web-app-capable" content="yes">
+
   <title>TAILBLADE</title>
+
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <h1>TAILBLADE</h1>
+
+  <main id="game-root">
+
+    <canvas
+      id="game-canvas"
+      width="320"
+      height="180"
+      aria-label="TAILBLADE"
+    ></canvas>
+
+  </main>
+
+  <!-- 縦画面時の案内 -->
+  <div id="rotate-hint" hidden>
+    <div class="rotate-card">
+      <div class="rotate-icon">↔</div>
+      <p>画面を横向きにしてください</p>
+    </div>
+  </div>
+
+  <!-- ゲーム開始前 -->
+  <div id="boot-screen">
+    <div class="boot-logo">TAILBLADE</div>
+    <div class="boot-subtitle">PIXEL ACTION GAME</div>
+
+    <button id="start-button" type="button">
+      START
+    </button>
+  </div>
+
+  <!-- ゲーム内UI -->
+  <div id="game-ui">
+
+    <div id="hud">
+
+      <div id="hp-area">
+        <div class="hud-label">HP</div>
+
+        <div id="hp-bar">
+          <div id="hp-fill"></div>
+        </div>
+
+        <div id="hp-text">100 / 100</div>
+      </div>
+
+      <div id="combo-area">
+        <div id="combo-count">0</div>
+        <div id="combo-label">COMBO</div>
+      </div>
+
+      <div id="score-area">
+        <div class="hud-label">SCORE</div>
+        <div id="score">000000</div>
+      </div>
+
+    </div>
+
+    <!-- モバイル操作 -->
+    <div id="mobile-controls">
+
+      <div id="virtual-stick">
+        <div id="stick-base">
+          <div id="stick-knob"></div>
+        </div>
+      </div>
+
+      <button
+        id="jump-button"
+        class="action-button"
+        type="button"
+        aria-label="ジャンプ"
+      >
+        J
+      </button>
+
+      <button
+        id="attack-button"
+        class="action-button attack"
+        type="button"
+        aria-label="攻撃"
+      >
+        A
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- ポーズ -->
+  <div id="pause-screen" hidden>
+
+    <div class="pause-card">
+
+      <div class="pause-title">
+        PAUSED
+      </div>
+
+      <button id="resume-button" type="button">
+        RESUME
+      </button>
+
+      <button id="restart-button" type="button">
+        RESTART
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- ゲームオーバー -->
+  <div id="game-over-screen" hidden>
+
+    <div class="result-card">
+
+      <div class="result-title">
+        GAME OVER
+      </div>
+
+      <div class="result-score-label">
+        SCORE
+      </div>
+
+      <div id="final-score">
+        000000
+      </div>
+
+      <div id="final-combo">
+        MAX COMBO 0
+      </div>
+
+      <button id="game-over-restart" type="button">
+        RETRY
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- クリア -->
+  <div id="clear-screen" hidden>
+
+    <div class="result-card">
+
+      <div class="result-title">
+        STAGE CLEAR
+      </div>
+
+      <div class="result-score-label">
+        SCORE
+      </div>
+
+      <div id="clear-score">
+        000000
+      </div>
+
+      <div id="clear-combo">
+        MAX COMBO 0
+      </div>
+
+      <button id="clear-restart" type="button">
+        PLAY AGAIN
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- Supabase -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+  <!-- ゲーム本体 -->
+  <script src="game.js"></script>
+
 </body>
 </html>
