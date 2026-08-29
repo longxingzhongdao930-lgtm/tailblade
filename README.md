@@ -1,46 +1,41 @@
-# TAILBLADE
+# TAILBLADE (Improved Phase A)
 
-PIXEL ACTION ADVENTURE — a mobile-first 2D pixel action game built with HTML5 Canvas.
+今回の更新内容（フェーズA）
+- 変化点:
+  - ジャンプの可変高さ（短押し/長押し）
+  - ジャンプ/攻撃の入力バッファ（誤差補正で快適に）
+  - 攻撃コンボ感の改善とヒットストップ演出
+  - プレイヤーの「フレーム風」アニメーション（Canvas描画で実装）
+  - タッチボタンの視覚フィードバック（押下アニメ・ホールドゲージ）
+  - ダッシュ残像・当たり判定微調整
+  - ボスの攻撃予備動作を分かりやすく改善
+  - AudioContext の確実な起動と短時間の重複抑制
 
-How to host
-1. Create a GitHub repository and add these files: `index.html`, `style.css`, `game.js`, `README.md`.
-2. In repository settings, enable GitHub Pages (select the branch where files are, e.g. `main`).
-3. Open the published URL on iPhone Safari (or desktop browser). The game is landscape-only — rotate your device.
+ホスティング
+- そのまま GitHub Pages に置けます（ビルド不要）
+- 必要ファイル: `index.html`, `style.css`, `game.js`, `README.md`
 
-Controls
-- Mobile: on-screen touch buttons (Left, Right, Jump, Attack, Dash). Multi-touch supported.
-- Desktop:
-  - A / ← = Left
-  - D / → = Right
-  - W / ↑ / Space = Jump
-  - Z / J = Attack
-  - Shift / K = Dash
-  - Esc = Pause
+操作説明
+- モバイル（タッチ）
+  - 左/右/ジャンプ/攻撃/ダッシュ のボタンを画面下部に表示
+  - ジャンプは押し続けると高くジャンプ（ホールドゲージで可視化）
+  - ダッシュはボタンにクールダウン表示
+  - 同時押し対応（例: 右＋ジャンプ、右＋攻撃）
 
-Features implemented
-- Landscape-only mobile gameplay with orientation overlay.
-- Zoom/scroll prevention (viewport meta, touch-action, gesturestart prevention).
-- Safe area aware UI (uses CSS env(safe-area-inset-bottom)).
-- Player with multiple states (idle, move, jump, dash, attack, damaged, death).
-- Movement with acceleration/friction, gravity, double-jump logic.
-- Dash with residual particles, invulnerability and cooldown.
-- Attack system with arc hit detection, combo stages, hitstop, knockback, particles, screen shake and score.
-- Enemies: normal, fast, big — each with stats and behavior.
-- Coins placed in stage, with pickup effect and sound.
-- Stage with platforms, gaps, different areas and boss trigger.
-- Boss: NIGHT GUARDIAN with 3 attack patterns, HP bar and intro.
-- UI: HP, SCORE, COMBO, AREA, Pause, Start, Game Over, Stage Clear.
-- Particles and simple pixel-art drawing entirely via Canvas (no external images).
-- WebAudio-based sound effects (synthesized), unlocked on user interaction.
-- requestAnimationFrame game loop with deltaTime clamping.
-- localStorage save for high score and best combo.
-- Supabase readiness: code is local-first; Supabase integration point can be added later without breaking the game.
+- PC（キーボード）
+  - A / ← = 左
+  - D / → = 右
+  - W / ↑ / Space = ジャンプ
+  - Z / J = 攻撃
+  - Shift / K = ダッシュ
+  - Esc = PAUSE
 
-Notes / next steps
-- The game is designed to be lightweight and fully client-side — no build step required.
-- If you want to add real art or music, replace procedural drawing with image assets and load them.
-- For online leaderboard, add Supabase client initialization behind a config UI (keys must not be hard-coded).
+注意・次のステップ（推奨）
+- 「世に出せるクオリティ」にするために次は画像ベースのスプライト導入（PNGスプライトシート）を強く推奨します。これによりキャラ表情や歩行アニメが一段と改善できます。
+- 音をさらに充実させるため、短い効果音ファイルやBGM追加、音量コントロールUIを追加します。
+- 実機（複数iPhone）で SafeArea / ホームバー干渉・回転動作を確認してください。
 
-Enjoy TAILBLADE! If you want, I can:
-- Push these files into a GitHub repo for you (if you provide repo name and grant access).
-- Add more levels, polish pixel art, or add touch haptics and more SFX.
+公開代行
+- 私がリポジトリへ直接コミットして GitHub Pages を公開することもできます（リポジトリ owner/name を教えてください。書き込み権限が必要です）。
+
+動作確認後に出てきた不具合や改善要望を教えてください。すぐに次ラウンドで修正・追加実装します。
