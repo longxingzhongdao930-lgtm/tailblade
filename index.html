@@ -1,1240 +1,228 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>TAILBLADE</title>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TAILBLADE</title>
 
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-html,
-body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #090711;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-}
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #07060c;
+      font-family: Arial, sans-serif;
+      touch-action: none;
+    }
 
-body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+    #game {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-#game {
-  width: min(100vw, 177.777vh);
-  height: min(100vh, 56.25vw);
-  position: relative;
-  overflow: hidden;
-  background: #171329;
-}
+    #title-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at center, #171027 0%, #0b0912 45%, #050509 100%);
+      z-index: 100;
+    }
 
-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-  image-rendering: pixelated;
-}
+    .logo {
+      margin: 0;
+      color: #f4e9c8;
+      font-family: Georgia, serif;
+      font-size: clamp(52px, 12vw, 150px);
+      letter-spacing: 0.04em;
+      text-shadow:
+        5px 5px 0 #38234d,
+        0 0 35px rgba(150, 90, 220, 0.25);
+      text-align: center;
+    }
 
-button {
-  font: inherit;
-}
-</style>
+    .subtitle {
+      margin-top: 12px;
+      color: #9a8fb5;
+      font-size: clamp(12px, 2.5vw, 28px);
+      letter-spacing: 0.45em;
+    }
+
+    #start-button {
+      margin-top: 70px;
+      width: min(260px, 55vw);
+      height: 78px;
+      border: 3px solid #f0a63c;
+      border-radius: 10px;
+      background: rgba(20, 15, 34, 0.8);
+      color: #f4e9c8;
+      font-size: 22px;
+      font-weight: bold;
+      letter-spacing: 0.25em;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform 0.12s, background 0.12s;
+    }
+
+    #start-button:active {
+      transform: scale(0.94);
+      background: #2a1b38;
+    }
+
+    #game-screen {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #07060c;
+    }
+
+    #game-screen.active {
+      display: flex;
+    }
+
+    canvas {
+      width: min(100vw, 177.78vh);
+      height: min(56.25vw, 100vh);
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      background: #111;
+    }
+
+    #rotate-hint {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #07060c;
+      color: #f4e9c8;
+      font-size: 6vw;
+      text-align: center;
+      z-index: 200;
+    }
+
+    @media (orientation: portrait) {
+      #rotate-hint {
+        display: flex;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div id="game">
-  <canvas id="canvas" width="320" height="180"></canvas>
-</div>
+  <div id="game">
 
-<script>
-"use strict";
+    <section id="title-screen">
+      <h1 class="logo">TAILBLADE</h1>
+      <div class="subtitle">PIXEL ACTION GAME</div>
 
-/* =========================================================
-   TAILBLADE
-   Completely new prototype
-   ========================================================= */
+      <button id="start-button" type="button">
+        START
+      </button>
+    </section>
 
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+    <section id="game-screen">
+      <canvas id="game-canvas" width="320" height="180"></canvas>
+    </section>
 
-ctx.imageSmoothingEnabled = false;
+    <div id="rotate-hint">
+      <p>画面を横向きにしてください</p>
+    </div>
 
-/* ---------- Constants ---------- */
+  </div>
 
-const W = 320;
-const H = 180;
+  <script>
+    "use strict";
 
-const COLORS = {
-  sky: "#241d3b",
-  sky2: "#4b3455",
-  ground: "#536342",
-  ground2: "#35442f",
-  path: "#96744e",
+    document.addEventListener("DOMContentLoaded", () => {
 
-  cat: "#e8b96a",
-  catLight: "#f8dfad",
-  catDark: "#a86f35",
-  eye: "#4fd6c0",
+      const startButton = document.getElementById("start-button");
+      const titleScreen = document.getElementById("title-screen");
+      const gameScreen = document.getElementById("game-screen");
+      const canvas = document.getElementById("game-canvas");
 
-  text: "#f7e8c7",
-  accent: "#f0a63c",
+      const ctx = canvas.getContext("2d");
 
-  enemy: "#b75d68",
-  enemyDark: "#713c4b"
-};
+      let gameStarted = false;
 
-/* ---------- Game State ---------- */
+      function startGame() {
+        if (gameStarted) return;
 
-let scene = "title";
-let lastTime = 0;
-let worldX = 0;
-let score = 0;
+        gameStarted = true;
 
-const keys = new Set();
+        titleScreen.style.display = "none";
+        gameScreen.classList.add("active");
 
-const input = {
-  left: false,
-  right: false,
-  up: false,
-  down: false,
-  attack: false
-};
+        drawGame();
 
-/* ---------- Player ---------- */
-
-const player = {
-  x: 70,
-  y: 0,
-
-  vx: 0,
-  vy: 0,
-
-  speed: 85,
-  jumpPower: 170,
-  gravity: 520,
-
-  grounded: true,
-
-  facing: 1,
-
-  attackTimer: 0,
-  attackCooldown: 0,
-
-  hp: 100,
-
-  anim: 0
-};
-
-/* ---------- Enemies ---------- */
-
-let enemies = [];
-
-/* ---------- Particles ---------- */
-
-let particles = [];
-
-/* =========================================================
-   INPUT
-   ========================================================= */
-
-window.addEventListener("keydown", e => {
-  keys.add(e.code);
-
-  if (
-    e.code === "Space" ||
-    e.code === "ArrowUp" ||
-    e.code === "ArrowDown" ||
-    e.code === "ArrowLeft" ||
-    e.code === "ArrowRight"
-  ) {
-    e.preventDefault();
-  }
-
-  if (scene === "title") {
-    startGame();
-  }
-
-  if (scene === "gameover" && e.code === "Enter") {
-    startGame();
-  }
-});
-
-window.addEventListener("keyup", e => {
-  keys.delete(e.code);
-});
-
-/* =========================================================
-   TOUCH
-   ========================================================= */
-
-let touchStart = null;
-
-canvas.addEventListener("pointerdown", e => {
-  e.preventDefault();
-
-  const p = screenToGame(e.clientX, e.clientY);
-
-  /* TITLE */
-  if (scene === "title") {
-    startGame();
-    return;
-  }
-
-  /* GAME OVER */
-  if (scene === "gameover") {
-    startGame();
-    return;
-  }
-
-  touchStart = {
-    x: p.x,
-    y: p.y
-  };
-
-  /* Right side = attack */
-  if (p.x > W * 0.68 && p.y > H * 0.55) {
-    attack();
-  }
-});
-
-canvas.addEventListener("pointermove", e => {
-  if (scene !== "play" || !touchStart) return;
-
-  const p = screenToGame(e.clientX, e.clientY);
-
-  const dx = p.x - touchStart.x;
-  const dy = p.y - touchStart.y;
-
-  input.left = dx < -8;
-  input.right = dx > 8;
-
-  input.up = dy < -15;
-  input.down = dy > 15;
-});
-
-canvas.addEventListener("pointerup", () => {
-  input.left = false;
-  input.right = false;
-  input.up = false;
-  input.down = false;
-  touchStart = null;
-});
-
-canvas.addEventListener("pointercancel", () => {
-  input.left = false;
-  input.right = false;
-  input.up = false;
-  input.down = false;
-  touchStart = null;
-});
-
-/* =========================================================
-   HELPERS
-   ========================================================= */
-
-function screenToGame(x, y) {
-  const r = canvas.getBoundingClientRect();
-
-  return {
-    x: (x - r.left) / r.width * W,
-    y: (y - r.top) / r.height * H
-  };
-}
-
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
-}
-
-function rect(x, y, w, h, color) {
-  ctx.fillStyle = color;
-  ctx.fillRect(
-    Math.round(x),
-    Math.round(y),
-    Math.round(w),
-    Math.round(h)
-  );
-}
-
-/* =========================================================
-   SCENE
-   ========================================================= */
-
-function startGame() {
-  scene = "play";
-
-  score = 0;
-  worldX = 0;
-
-  player.x = 70;
-  player.y = 0;
-  player.vx = 0;
-  player.vy = 0;
-  player.grounded = true;
-  player.hp = 100;
-  player.attackTimer = 0;
-  player.attackCooldown = 0;
-
-  enemies = [
-    createEnemy(230),
-    createEnemy(390),
-    createEnemy(570),
-    createEnemy(780)
-  ];
-
-  particles = [];
-}
-
-function createEnemy(x) {
-  return {
-    x,
-    y: 0,
-    hp: 30,
-    vx: 0,
-    hit: 0
-  };
-}
-
-/* =========================================================
-   UPDATE
-   ========================================================= */
-
-function update(dt) {
-
-  if (scene !== "play") return;
-
-  updateInput();
-
-  updatePlayer(dt);
-
-  updateEnemies(dt);
-
-  updateParticles(dt);
-
-  /* camera */
-
-  worldX += (player.x - 105 - worldX) * 6 * dt;
-
-  worldX = Math.max(0, worldX);
-
-  /* score */
-
-  score = Math.max(score, Math.floor(player.x));
-
-  /* game over */
-
-  if (player.hp <= 0) {
-    scene = "gameover";
-  }
-}
-
-/* ---------- Input ---------- */
-
-function updateInput() {
-
-  input.left =
-    keys.has("ArrowLeft") ||
-    keys.has("KeyA");
-
-  input.right =
-    keys.has("ArrowRight") ||
-    keys.has("KeyD");
-
-  input.up =
-    keys.has("ArrowUp") ||
-    keys.has("KeyW");
-
-  input.down =
-    keys.has("ArrowDown") ||
-    keys.has("KeyS");
-
-  if (
-    keys.has("Space") ||
-    keys.has("KeyJ") ||
-    keys.has("KeyZ")
-  ) {
-    attack();
-    keys.delete("Space");
-    keys.delete("KeyJ");
-    keys.delete("KeyZ");
-  }
-}
-
-/* ---------- Player ---------- */
-
-function updatePlayer(dt) {
-
-  let dir = 0;
-
-  if (input.left) dir -= 1;
-  if (input.right) dir += 1;
-
-  player.vx +=
-    (dir * player.speed - player.vx) *
-    Math.min(1, 12 * dt);
-
-  player.x += player.vx * dt;
-
-  player.x = Math.max(20, player.x);
-
-  if (dir !== 0) {
-    player.facing = dir;
-    player.anim += dt * 10;
-  }
-
-  /* jump */
-
-  if (input.up && player.grounded) {
-    player.vy = player.jumpPower;
-    player.grounded = false;
-  }
-
-  if (!player.grounded) {
-
-    player.vy -= player.gravity * dt;
-
-    player.y += player.vy * dt;
-
-    if (player.y <= 0) {
-      player.y = 0;
-      player.vy = 0;
-      player.grounded = true;
-    }
-  }
-
-  /* attack */
-
-  if (player.attackTimer > 0) {
-    player.attackTimer -= dt;
-  }
-
-  if (player.attackCooldown > 0) {
-    player.attackCooldown -= dt;
-  }
-}
-
-/* ---------- Attack ---------- */
-
-function attack() {
-
-  if (scene !== "play") return;
-
-  if (player.attackCooldown > 0) return;
-
-  player.attackTimer = 0.18;
-  player.attackCooldown = 0.28;
-
-  const attackX =
-    player.x + player.facing * 22;
-
-  for (const enemy of enemies) {
-
-    if (enemy.hp <= 0) continue;
-
-    const dx = enemy.x - attackX;
-
-    if (
-      Math.abs(dx) < 28 &&
-      Math.abs(enemy.y - player.y) < 25
-    ) {
-
-      enemy.hp -= 10;
-      enemy.hit = 0.15;
-
-      enemy.vx =
-        player.facing * 100;
-
-      burst(
-        enemy.x - worldX,
-        130 - enemy.y,
-        8,
-        COLORS.accent
-      );
-
-      score += 50;
-    }
-  }
-}
-
-/* ---------- Enemies ---------- */
-
-function updateEnemies(dt) {
-
-  for (const enemy of enemies) {
-
-    if (enemy.hp <= 0) continue;
-
-    enemy.hit -= dt;
-
-    const dx = player.x - enemy.x;
-
-    if (Math.abs(dx) < 150) {
-
-      enemy.vx =
-        Math.sign(dx) * 25;
-
-      enemy.x += enemy.vx * dt;
-
-      if (Math.abs(dx) < 24) {
-
-        player.hp -= 10 * dt;
-
+        console.log("TAILBLADE STARTED");
       }
-    }
-  }
 
-  enemies = enemies.filter(e =>
-    e.hp > 0 || Math.abs(e.x - player.x) < 300
-  );
-}
+      startButton.addEventListener("click", startGame);
 
-/* ---------- Particles ---------- */
+      startButton.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+      });
 
-function burst(x, y, amount, color) {
+      function drawGame() {
 
-  for (let i = 0; i < amount; i++) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    particles.push({
-      x,
-      y,
+        // 背景
+        ctx.fillStyle = "#11101a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      vx: (Math.random() - .5) * 80,
-      vy: (Math.random() - .5) * 80,
+        // 空
+        ctx.fillStyle = "#211733";
+        ctx.fillRect(0, 0, canvas.width, 110);
 
-      life: .35 + Math.random() * .3,
+        // 地面
+        ctx.fillStyle = "#30243d";
+        ctx.fillRect(0, 110, canvas.width, 70);
 
-      color
+        // 地面ライン
+        ctx.fillStyle = "#f0a63c";
+        ctx.fillRect(0, 109, canvas.width, 2);
+
+        // 仮プレイヤー
+        ctx.fillStyle = "#e8b96a";
+        ctx.fillRect(70, 90, 14, 20);
+
+        ctx.fillStyle = "#f8e0b0";
+        ctx.fillRect(73, 84, 10, 8);
+
+        // 目
+        ctx.fillStyle = "#4fd6c0";
+        ctx.fillRect(79, 86, 2, 2);
+
+        // UI
+        ctx.fillStyle = "#f4e9c8";
+        ctx.font = "10px Arial";
+        ctx.fillText("TAILBLADE", 10, 15);
+
+        ctx.fillStyle = "#9a8fb5";
+        ctx.fillText("GAME STARTED", 10, 28);
+      }
+
     });
-  }
-}
-
-function updateParticles(dt) {
-
-  for (const p of particles) {
-
-    p.x += p.vx * dt;
-    p.y += p.vy * dt;
-
-    p.vy += 100 * dt;
-
-    p.life -= dt;
-  }
-
-  particles =
-    particles.filter(p => p.life > 0);
-}
-
-/* =========================================================
-   RENDER
-   ========================================================= */
-
-function render() {
-
-  ctx.clearRect(0, 0, W, H);
-
-  if (scene === "title") {
-    renderTitle();
-    return;
-  }
-
-  renderWorld();
-
-  if (scene === "play") {
-    renderGameUI();
-  }
-
-  if (scene === "gameover") {
-    renderGameOver();
-  }
-}
-
-/* ---------- Background ---------- */
-
-function renderWorld() {
-
-  /* sky */
-
-  rect(0, 0, W, 180, COLORS.sky);
-
-  rect(0, 70, W, 50, COLORS.sky2);
-
-  /* moon */
-
-  ctx.fillStyle = "#f7d488";
-  ctx.beginPath();
-  ctx.arc(245, 42, 10, 0, Math.PI * 2);
-  ctx.fill();
-
-  /* distant hills */
-
-  for (let i = 0; i < 8; i++) {
-
-    const x =
-      i * 70 -
-      (worldX * .18) % 70;
-
-    rect(
-      x,
-      95,
-      55,
-      30,
-      "#302747"
-    );
-  }
-
-  /* trees */
-
-  for (let i = 0; i < 12; i++) {
-
-    const x =
-      i * 45 -
-      (worldX * .4) % 45;
-
-    drawTree(x, 110);
-  }
-
-  /* ground */
-
-  rect(0, 116, W, 64, COLORS.ground);
-
-  /* path */
-
-  rect(0, 132, W, 32, COLORS.path);
-
-  /* path details */
-
-  for (let x = -20; x < W + 20; x += 32) {
-
-    const px =
-      x - (worldX % 32);
-
-    rect(px, 145, 12, 2, "#72583f");
-  }
-
-  /* enemies */
-
-  for (const enemy of enemies) {
-
-    if (enemy.hp <= 0) continue;
-
-    const x = enemy.x - worldX;
-
-    if (x < -30 || x > W + 30) continue;
-
-    drawEnemy(
-      x,
-      132 - enemy.y,
-      enemy
-    );
-  }
-
-  /* player */
-
-  drawCat(
-    player.x - worldX,
-    132 - player.y
-  );
-
-  /* particles */
-
-  for (const p of particles) {
-
-    ctx.globalAlpha =
-      clamp(p.life / .4, 0, 1);
-
-    rect(
-      p.x,
-      p.y,
-      2,
-      2,
-      p.color
-    );
-  }
-
-  ctx.globalAlpha = 1;
-}
-
-/* ---------- Tree ---------- */
-
-function drawTree(x, y) {
-
-  rect(x + 8, y - 24, 5, 24, "#34251f");
-
-  rect(x, y - 35, 22, 18, "#293b35");
-
-  rect(x + 4, y - 42, 14, 12, "#30473b");
-}
-
-/* ---------- Cat ---------- */
-
-function drawCat(x, y) {
-
-  const bob =
-    player.grounded && Math.abs(player.vx) > 5
-      ? Math.sin(player.anim) * 2
-      : 0;
-
-  const yy = y + bob;
-
-  const crouch =
-    player.grounded ? 0 : 2;
-
-  /* tail */
-
-  rect(
-    x - player.facing * 13,
-    yy - 26,
-    3,
-    16,
-    COLORS.catDark
-  );
-
-  rect(
-    x - player.facing * 16,
-    yy - 29,
-    3,
-    7,
-    COLORS.cat
-  );
-
-  /* legs */
-
-  rect(x - 7, yy - 15, 5, 12, COLORS.catDark);
-  rect(x + 2, yy - 15, 5, 12, COLORS.cat);
-
-  /* boots */
-
-  rect(x - 8, yy - 4, 7, 3, "#70452d");
-  rect(x + 2, yy - 4, 7, 3, "#70452d");
-
-  /* body */
-
-  rect(
-    x - 9,
-    yy - 34 + crouch,
-    18,
-    20,
-    COLORS.cat
-  );
-
-  rect(
-    x - 7,
-    yy - 32 + crouch,
-    4,
-    17,
-    COLORS.catLight
-  );
-
-  /* cape */
-
-  rect(
-    x - 8,
-    yy - 31,
-    16,
-    11,
-    "#3f6fb5"
-  );
-
-  rect(
-    x - 8,
-    yy - 20,
-    16,
-    4,
-    "#2a4a7e"
-  );
-
-  /* head */
-
-  rect(
-    x - 9,
-    yy - 47 + crouch,
-    18,
-    15,
-    COLORS.cat
-  );
-
-  /* ears */
-
-  rect(
-    x - 8,
-    yy - 53 + crouch,
-    6,
-    7,
-    COLORS.cat
-  );
-
-  rect(
-    x + 2,
-    yy - 53 + crouch,
-    6,
-    7,
-    COLORS.cat
-  );
-
-  rect(
-    x - 6,
-    yy - 51 + crouch,
-    3,
-    3,
-    "#e5788a"
-  );
-
-  rect(
-    x + 3,
-    yy - 51 + crouch,
-    3,
-    3,
-    "#e5788a"
-  );
-
-  /* face */
-
-  const eyeX =
-    x + player.facing * 3;
-
-  rect(
-    eyeX - 1,
-    yy - 44 + crouch,
-    2,
-    3,
-    COLORS.eye
-  );
-
-  /* sword */
-
-  if (player.attackTimer > 0) {
-
-    const sx =
-      x + player.facing * 13;
-
-    rect(
-      sx,
-      yy - 39,
-      16 * player.facing,
-      3,
-      "#dfe7ef"
-    );
-
-    rect(
-      sx - player.facing * 4,
-      yy - 41,
-      4,
-      7,
-      COLORS.accent
-    );
-  }
-}
-
-/* ---------- Enemy ---------- */
-
-function drawEnemy(x, y, enemy) {
-
-  const flash =
-    enemy.hit > 0;
-
-  const body =
-    flash ? "#ffffff" : COLORS.enemy;
-
-  rect(
-    x - 9,
-    y - 24,
-    18,
-    18,
-    body
-  );
-
-  rect(
-    x - 8,
-    y - 30,
-    16,
-    10,
-    body
-  );
-
-  rect(
-    x - 7,
-    y - 34,
-    5,
-    6,
-    body
-  );
-
-  rect(
-    x + 2,
-    y - 34,
-    5,
-    6,
-    body
-  );
-
-  rect(
-    x - 5,
-    y - 27,
-    3,
-    3,
-    "#24131c"
-  );
-
-  rect(
-    x + 2,
-    y - 27,
-    3,
-    3,
-    "#24131c"
-  );
-
-  /* HP */
-
-  rect(
-    x - 12,
-    y - 39,
-    24,
-    3,
-    "#24131c"
-  );
-
-  rect(
-    x - 12,
-    y - 39,
-    24 * clamp(enemy.hp / 30, 0, 1),
-    3,
-    "#e56b72"
-  );
-}
-
-/* ---------- UI ---------- */
-
-function renderGameUI() {
-
-  /* HP bar */
-
-  rect(8, 8, 80, 8, "#201724");
-
-  rect(
-    8,
-    8,
-    80 * clamp(player.hp / 100, 0, 1),
-    8,
-    "#e56b72"
-  );
-
-  drawText(
-    "HP",
-    10,
-    15,
-    7,
-    COLORS.text
-  );
-
-  drawText(
-    "SCORE " + score,
-    210,
-    15,
-    7,
-    COLORS.text
-  );
-
-  /* attack button */
-
-  ctx.globalAlpha = .55;
-
-  ctx.fillStyle = COLORS.accent;
-
-  ctx.beginPath();
-  ctx.arc(280, 145, 20, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.globalAlpha = 1;
-
-  drawText(
-    "ATK",
-    268,
-    148,
-    7,
-    "#1b1420"
-  );
-}
-
-/* ---------- Title ---------- */
-
-function renderTitle() {
-
-  renderTitleBackground();
-
-  drawText(
-    "TAILBLADE",
-    160,
-    45,
-    20,
-    COLORS.text,
-    true
-  );
-
-  drawText(
-    "A TALE OF CATS AND FAIRIES",
-    160,
-    70,
-    7,
-    COLORS.accent,
-    true
-  );
-
-  drawCatPreview();
-
-  drawText(
-    "TAP TO START",
-    160,
-    118,
-    9,
-    COLORS.text,
-    true
-  );
-
-  drawText(
-    "ARROWS / WASD : MOVE",
-    160,
-    143,
-    6,
-    "#9a8fb5",
-    true
-  );
-
-  drawText(
-    "SPACE / Z : ATTACK",
-    160,
-    153,
-    6,
-    "#9a8fb5",
-    true
-  );
-}
-
-/* ---------- Title background ---------- */
-
-function renderTitleBackground() {
-
-  rect(0, 0, W, H, COLORS.sky);
-
-  rect(0, 70, W, 50, COLORS.sky2);
-
-  for (let i = 0; i < 8; i++) {
-
-    drawTree(
-      i * 50 + 10,
-      120
-    );
-  }
-
-  rect(0, 120, W, 60, COLORS.ground);
-
-  rect(0, 137, W, 30, COLORS.path);
-}
-
-/* ---------- Cat Preview ---------- */
-
-function drawCatPreview() {
-
-  const oldX = player.x;
-  const oldY = player.y;
-
-  player.x = 160;
-  player.y = 0;
-  player.facing = 1;
-
-  drawCat(160, 137);
-
-  player.x = oldX;
-  player.y = oldY;
-}
-
-/* ---------- Game Over ---------- */
-
-function renderGameOver() {
-
-  ctx.globalAlpha = .65;
-
-  rect(
-    0,
-    0,
-    W,
-    H,
-    "#08060d"
-  );
-
-  ctx.globalAlpha = 1;
-
-  drawText(
-    "GAME OVER",
-    160,
-    68,
-    15,
-    COLORS.text,
-    true
-  );
-
-  drawText(
-    "SCORE " + score,
-    160,
-    91,
-    8,
-    COLORS.accent,
-    true
-  );
-
-  drawText(
-    "TAP TO RETRY",
-    160,
-    116,
-    8,
-    COLORS.text,
-    true
-  );
-}
-
-/* =========================================================
-   PIXEL TEXT
-   ========================================================= */
-
-const FONT = {
-  A:["01110","10001","10001","11111","10001","10001","10001"],
-  B:["11110","10001","10001","11110","10001","10001","11110"],
-  C:["01111","10000","10000","10000","10000","10000","01111"],
-  D:["11110","10001","10001","10001","10001","10001","11110"],
-  E:["11111","10000","10000","11110","10000","10000","11111"],
-  F:["11111","10000","10000","11110","10000","10000","10000"],
-  G:["01111","10000","10000","10111","10001","10001","01111"],
-  H:["10001","10001","10001","11111","10001","10001","10001"],
-  I:["11111","00100","00100","00100","00100","00100","11111"],
-  J:["00111","00010","00010","00010","00010","10010","01100"],
-  K:["10001","10010","10100","11000","10100","10010","10001"],
-  L:["10000","10000","10000","10000","10000","10000","11111"],
-  M:["10001","11011","10101","10101","10001","10001","10001"],
-  N:["10001","11001","10101","10011","10001","10001","10001"],
-  O:["01110","10001","10001","10001","10001","10001","01110"],
-  P:["11110","10001","10001","11110","10000","10000","10000"],
-  Q:["01110","10001","10001","10001","10101","10010","01101"],
-  R:["11110","10001","10001","11110","10100","10010","10001"],
-  S:["01111","10000","10000","01110","00001","00001","11110"],
-  T:["11111","00100","00100","00100","00100","00100","00100"],
-  U:["10001","10001","10001","10001","10001","10001","01110"],
-  V:["10001","10001","10001","10001","10001","01010","00100"],
-  W:["10001","10001","10001","10101","10101","11011","10001"],
-  X:["10001","10001","01010","00100","01010","10001","10001"],
-  Y:["10001","10001","01010","00100","00100","00100","00100"],
-  Z:["11111","00001","00010","00100","01000","10000","11111"],
-
-  0:["01110","10001","10011","10101","11001","10001","01110"],
-  1:["00100","01100","00100","00100","00100","00100","01110"],
-  2:["01110","10001","00001","00010","00100","01000","11111"],
-  3:["11110","00001","00001","01110","00001","00001","11110"],
-  4:["00010","00110","01010","10010","11111","00010","00010"],
-  5:["11111","10000","10000","11110","00001","00001","11110"],
-  6:["01110","10000","10000","11110","10001","10001","01110"],
-  7:["11111","00001","00010","00100","01000","01000","01000"],
-  8:["01110","10001","10001","01110","10001","10001","01110"],
-  9:["01110","10001","10001","01111","00001","00010","11100"]
-};
-
-function drawText(
-  text,
-  x,
-  y,
-  scale = 1,
-  color = "#fff",
-  centered = false
-) {
-
-  text = String(text).toUpperCase();
-
-  const spacing = 1;
-
-  const width =
-    text.length * (5 + spacing) * scale;
-
-  let startX =
-    centered
-      ? x - width / 2
-      : x;
-
-  ctx.fillStyle = color;
-
-  for (let c = 0; c < text.length; c++) {
-
-    const ch = text[c];
-
-    if (ch === " ") {
-      startX += 6 * scale;
-      continue;
-    }
-
-    const glyph = FONT[ch];
-
-    if (!glyph) continue;
-
-    for (let row = 0; row < 7; row++) {
-
-      for (let col = 0; col < 5; col++) {
-
-        if (glyph[row][col] === "1") {
-
-          ctx.fillRect(
-            Math.round(
-              startX +
-              col * scale
-            ),
-            Math.round(
-              y +
-              row * scale
-            ),
-            Math.max(1, Math.round(scale)),
-            Math.max(1, Math.round(scale))
-          );
-        }
-      }
-    }
-
-    startX +=
-      (5 + spacing) * scale;
-  }
-}
-
-/* =========================================================
-   LOOP
-   ========================================================= */
-
-function loop(time) {
-
-  if (!lastTime) {
-    lastTime = time;
-  }
-
-  let dt =
-    (time - lastTime) / 1000;
-
-  lastTime = time;
-
-  dt = Math.min(dt, .05);
-
-  update(dt);
-
-  render();
-
-  requestAnimationFrame(loop);
-}
-
-requestAnimationFrame(loop);
-
-</script>
+  </script>
 
 </body>
 </html>
